@@ -18,6 +18,8 @@ namespace OdysseyExt
 	{
 		public string ModuleName => "Odyssey level editor";
 
+		StageSelectionForm StageSelection = new StageSelectionForm();
+
 		public Tuple<Type, Type>[] GetClassConverters { get; } =
 		new Tuple<Type, Type>[] {
 			new Tuple<Type, Type>(typeof(LinksNode), typeof(LinksConveter))
@@ -53,6 +55,8 @@ namespace OdysseyExt
 		//bool UseKclCollisions = false;
 		public void InitModule(IEditorFormContext currentView)
 		{
+			StageSelection.FormClosing += StageSelection_FormClosing;
+
 			ViewForm = currentView;
 			MenuExt = new OdysseyMenuExt();
 			//ToggleKclCollisions(false);
@@ -64,14 +68,28 @@ namespace OdysseyExt
 
 		void SelectStage(object o, EventArgs a)
 		{
-			var f = new StageSelectionForm();
-			f.ShowDialog();
-			if (f.Result == null) return;
-			if (File.Exists($"{GameFolder}StageData\\{f.Result}Map.szs")) 
-				ViewForm.LoadLevel($"{GameFolder}StageData\\{f.Result}Map.szs"); //Also it's possible to load a specific scenario with ViewForm.LoadLevel(new Level(f.result, id))
+			if(StageSelection.ShowDialog() == DialogResult.OK)
+				ViewForm.LoadLevel($"{GameFolder}StageData\\{StageSelection.StageName}{StageSelection.StageType}.szs"); //Also it's possible to load a specific scenario with ViewForm.LoadLevel(new Level(f.result, id))
 		}
 
-       // void ToggleKclCollisions(bool? val = null)
+		private void StageSelection_FormClosing(object sender, FormClosingEventArgs e)
+		{
+			if(StageSelection.DialogResult == DialogResult.OK)
+			{
+				if (StageSelection.StageName != null && File.Exists($"{GameFolder}StageData\\{StageSelection.StageName}{StageSelection.StageType}.szs"))
+					return;
+				else if (StageSelection.StageName != null && File.Exists($"{GameFolder}StageData\\{StageSelection.StageName}Map.szs"))
+				{
+					MessageBox.Show($"There is no {StageSelection.StageType} File for this Stage");
+					e.Cancel = true;
+				}
+				else
+					e.Cancel = true;
+
+			}
+		}
+
+		// void ToggleKclCollisions(bool? val = null)
 		//{
 		//	UseKclCollisions = val.HasValue ? val.Value : !UseKclCollisions;
 		//	MenuExt.KCLCollisions.Text = $"Use collisions as stage models : {(UseKclCollisions ? "ON" : "OFF")}";

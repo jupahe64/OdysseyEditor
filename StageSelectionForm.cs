@@ -13,11 +13,15 @@ namespace OdysseyExt
 {
 	public partial class StageSelectionForm : Form 
 	{
-		public string Result = null;
+		public string StageName => treeView1.SelectedNode.Tag as string;
+
+		public string StageType => comboBox1.SelectedItem as string;
 
 		public StageSelectionForm()
 		{
 			InitializeComponent();
+
+			comboBox1.SelectedIndex = 0;
 
 			#region treeview
 			treeView1.Nodes.Add(ContainerLevel("Cap Kingdom", "CapWorldHomeStage",
@@ -40,7 +44,7 @@ namespace OdysseyExt
 			));
 			treeView1.Nodes.Add(ContainerLevel("Sand Kingdom", "SandWorldHomeStage",
 				Level("Town", "SandWorldHomeTownZone"),
-				Level("Round Tower", "SandWorldKillerTowerZone"),
+				Level("8-bit Tower", "SandWorldKillerTowerZone"),
 				Level("Shop", "SandWorldShopStage"),
 				Level("Slots", "SandWorldSlotStage"),
 				Level("Costume Needed: Dancing", "SandWorldCostumeStage"),
@@ -73,6 +77,69 @@ namespace OdysseyExt
 					Level("Poison Swamp", "FrogPoisonExStage")
 				)
 			));
+			treeView1.Nodes.Add(ContainerLevel("Wodded Kingdom", "ForestWorldHomeStage",
+				Level("Deep Woods", "ForestWorldWoodsStage"),
+				Level("Sky Garden Tower", "ForestWorldTowerStage"),
+				Level("8-bit Section", "ForestWorld2DRoadZone"),
+				Level("2D Athletics", "ForestWorldAthleticZone"),
+				Level("Timer Challenge 2", "ForestWorldTimerAthletic001Zone"),
+				Level("Costume Needed: Treasure in the Deep Woods", "ForestWorldWoodsCostumeStage"),
+				Level("Deep Woods: Treasure Vault", "ForestWorldWoodsTreasureStage"),
+				Level("Torkdrift Boss Arena", "ForestWorldBossStage"),
+				Level("Spinning-Platforms Treasure Vault", "ForestWorldBonusStage"),
+				Folder("Sub rooms",
+					Level("Flooding Pipeway", "ForestWorldWaterExStage"),
+					Level("Fog Wandering", "FogMountainExStage"),
+					Level("Flower Road", "RailCollisionExStage"),
+					Level("Sherm Elevator", "ShootingElevatorExStage"),
+					Level("Walking on Clouds", "ForestWorldCloudBonusExStage"),
+					Level("Invisible Road", "PackunPoisonExStage"),
+					Level("Sheep Herding", "AnimalChaseExStage"),
+					Level("Breakdown Road", "KillerRoadExStage")
+				)
+			));
+			treeView1.Nodes.Add(ContainerLevel("Cloud Kingdom", "CloudWorldHomeStage",
+				Level("Goomba Picture Puzzle", "FukuwaraiKuriboStage"),
+				Folder("Sub rooms",
+					Level("King of the Cube", "Cube2DExStage")
+				)
+			));
+			treeView1.Nodes.Add(ContainerLevel("Lost Kingdom", "ClashWorldHomeStage",
+				Level("Shop", "ClashWorldShopStage"),
+				Folder("Sub rooms",
+					Level("Tropical Wiggler Swamp", "ImomuPoisonExStage"),
+					Level("Klepto Lava Bath", "JangoExStage")
+				)
+			));
+			treeView1.Nodes.Add(ContainerLevel("Metro Kingdom", "CityWorldHomeStage",
+				Level("Timer Challenge 1", "CityWorldTimerAthletic000Zone"),
+				Level("Timer Challenge 3", "CityWorldTimerAthletic002Zone"),
+				Level("Timer Challenge 4", "CityWorldTimerAthletic003Zone"),
+				Folder("8-bit Festival",
+					Level("Barrel Avoid Section", "CityWorld2DSign000Zone"),
+					Level("Barrel Avoid Section 2", "CityWorld2DSign001Zone"),
+					Level("Gravity Flip Section", "CityWorld2DSign002Zone"),
+					Level("Upside Down Section", "CityWorld2DSign003Zone"),
+					Level("Secret", "CityWorld2DSign004Zone"),
+					Level("Coin fall Section", "CityWorld2DSign005Zone"),
+					Level("DK Fight Section", "CityWorld2DSign006Zone")
+				),
+				Folder("Sub rooms",
+					Level("RC Race", "RadioControlExStage"),
+					Level("Rainbow Notes", "Note2D3DRoomExStage"),
+					Level("Projection Room(smb 1-1)", "Theater2DExStage"),
+					Level("Crowded Street", "CityPeopleRoadStage"),
+					Level("Electric Wire", "ElectricWireExStage"),
+					Level("Sherm Siege", "ShootingCityExStage"),
+					Level("Rotating Maze", "CapRotatePackunExStage"),
+					Level("Pole Jumping", "PoleGrabCeilExStage"),
+					Level("Bullet Building", "PoleKillerExStage"),
+					Level("T-Rex Escape", "TrexBikeExStage"),
+					Level("Scaling Pitch Black Mountain", "DonsukeExStage"),
+					Level("Swinging Scaffolding", "SwingSteelExStage"),
+					Level("Vanishing Road", "BikeSteelExStage")
+				)
+			));
 			#endregion
 		}
 
@@ -96,29 +163,9 @@ namespace OdysseyExt
 		}
 		#endregion
 
-		private void button2_Click(object sender, EventArgs e)
-		{
-			Result = null;
-			this.Close();
-		}
-
-		private void button1_Click(object sender, EventArgs e)
-		{
-			if (treeView1.SelectedNode == null)
-			{
-				MessageBox.Show("Select a level");
-				return;
-			}
-			Result = treeView1.SelectedNode.Tag as string;
-			this.Close();
-		}
-
 		private void treeView1_DoubleClick(object sender, EventArgs e)
 		{
-			if (treeView1.SelectedNode == null)
-				return;
-			Result = treeView1.SelectedNode.Tag as string;
-			this.Close();
+			button1.PerformClick();
 		}
 	}
 }
