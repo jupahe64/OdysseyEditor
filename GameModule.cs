@@ -14,7 +14,7 @@ using System.Windows.Forms;
 
 namespace OdysseyExt
 {
-	public class OdysseyModule : IGameModule, IEditingOptionsModule
+	public class OdysseyModule : IGameModule, IEditingOptionsModule, IActionButtonsModule
 	{
 		public string ModuleName => "Odyssey level editor";
 
@@ -37,7 +37,7 @@ namespace OdysseyExt
 
 		public string ModelsFolder => "OdysseyModels";
 
-		public bool ConvertModelFile(string ObjName, string path) => BfresConverter.Convert(BfresFromSzs(ObjName), path);
+		public bool ConvertModelFile(string ObjName, string path) => BfresConverter.Convert(BfresFromSzs(ObjName), path) != null;
 
 		public string GetPlaceholderModel(string name, string listName)
 		{
@@ -129,11 +129,18 @@ namespace OdysseyExt
 					return null;
 				file = opn.FileName;
 			}
+			try
+			{
 #if DEBUG
-			return new Level(file, 0);
+				return new Level(file, -1);
 #else
-			return new Level(file, -1);
+				return new Level(file, -1);
 #endif
+			}
+			catch (OperationCanceledException)
+			{
+				return null;
+			}
 		}
 
 		public ILevel NewLevel(string file = null)
@@ -165,7 +172,15 @@ namespace OdysseyExt
 			return dlg.Result;
 		}
 
-		public bool OpenLevelFile(string name, Stream file) => false;
+		public bool OpenLevelFile(string name, Stream file)
+		{
+			if (name.EndsWith(".byml"))
+			{
+				ByamlViewer.OpenByml(file, name, file,true);
+				return true;
+			}
+			return false;
+		}
 
 		public string AddObjList(ILevel level)
 		{
@@ -329,15 +344,77 @@ namespace OdysseyExt
 			obj.Prop[Rail.N_CtrlPoints][1]["Y"] = obj.Prop[LevelObj.N_Translate]["Y"];
 			obj.Prop[Rail.N_CtrlPoints][1]["Z"] = obj.Prop[LevelObj.N_Translate]["Z"];
 		}
+		#endregion
 
-		void IEditingOptionsModule.InitActionButtons(ref ToolStrip baseButtonStrip)
+		#region CustomActionButtons
+		ToolStripDropDownButton OdysseyDropDown;
+		public void InitActionButtons(ref ToolStrip baseButtonStrip)
 		{
-
+			OdysseyDropDown = new ToolStripDropDownButton() { Text = "Odyssey" };
+			baseButtonStrip.Items.Add(OdysseyDropDown);
+			var AddViewBtn = new ToolStripMenuItem("Add GroupView items");
+			AddViewBtn.Click += AddViewBtn_Click;
+			var CloneScenarioBtn = new ToolStripMenuItem("Clone scenario");
+			CloneScenarioBtn.Click += CloneScenarioBtn_Click;
+			OdysseyDropDown.DropDownItems.Add(AddViewBtn);
+			OdysseyDropDown.DropDownItems.Add(CloneScenarioBtn);
 		}
 
-		ToolStrip IEditingOptionsModule.GetActionButtons(IObjList activeObjList, ILevelObj selectedObj)
+		private void CloneScenarioBtn_Click(object sender, EventArgs e)
 		{
-			return null;
+			var lev = (Level)ViewForm.LoadedLevel;
+			var s = new EditorForms.CloneScenarioDialog(lev.CurScenario, lev.ScenarioCount);			
+			s.ShowDialog();
+			if (s.result == null)
+				return;
+			foreach (int i in s.result)
+				lev.LoadedLevelData[i] = s.clone ?
+					DeepCloneDictArr.DeepClone((Dictionary<string, dynamic>)lev.LoadedLevelData[lev.CurScenario]) :
+					lev.LoadedLevelData[lev.CurScenario];
+		}
+
+		private void AddViewBtn_Click(object sender, EventArgs e)
+		{
+			if (ViewForm.SelectedObjs.Length == 0)
+			{
+				MessageBox.Show("Select at least an object to use this function");
+				return;
+			}
+			var res = MessageBox.Show(
+				"This will add a ViewGroup to all the selected objects. The children list will be LINKED among all the objects, this means that when editing the GroupView for one object it will automatically change for all the objects you selected when creating it.\r\n" +
+				"This only works for the current session (aka if you save and then reload the level the linked editing will be lost).\r\n" +
+				"This action cannot be undone, do you want to continue ?", "", MessageBoxButtons.YesNo);
+			if (res != DialogResult.Yes) return;
+			var list = new List<dynamic>();
+			var obj = OdysseyModule.ObjsDB.MakeObject("GroupView");
+			obj[LevelObj.N_UnitConfig][LevelObj.N_UnitConfigBaseClass] = "GroupView";
+			obj.ID_int = ++ViewForm.LoadedLevel.HighestID;			
+			list.Add(obj.Prop);
+			bool? KeepCurrent = null;
+			foreach (var o in ViewForm.SelectedObjs)
+			{
+				var linkNode = o[LevelObj.N_Links] as LinksNode;
+				if (linkNode == null)
+				{
+					linkNode = new LinksNode();
+					o[LevelObj.N_Links] = linkNode;
+				}
+				if (linkNode.ContainsKey("ViewGroup"))
+				{
+					if (KeepCurrent == null)
+					{
+						res = MessageBox.Show("One or more objects already have a ViewGroup list, do you want to replace it ?\r\n" +
+										"Clicking No will add the GroupView object but will not link the list to keep the already existing GroupViews, the object will be linked anyway", "", MessageBoxButtons.YesNo);
+						KeepCurrent = res != DialogResult.Yes;
+					}
+					else if (KeepCurrent.Value)
+						((List<dynamic>)linkNode["ViewGroup"]).Add(obj.Prop);
+					else
+						linkNode["ViewGroup"] = list;
+				}
+				else 
+					linkNode.Add("ViewGroup", list);
+			}
 		}
 		#endregion
 	}

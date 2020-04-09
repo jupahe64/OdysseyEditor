@@ -70,6 +70,7 @@ namespace OdysseyExt
         public dynamic LoadedLevelData { get; set; }
 		public string FilePath { get; set; } = "";
         int _ScenarioIndex = -1;
+		public int CurScenario { get => _ScenarioIndex; }
 		public int ScenarioCount => LoadedLevelData.Count;
 
 		public int HighestID { get; set; }
@@ -126,10 +127,18 @@ namespace OdysseyExt
         {
 			objs = new Dictionary<string, IObjList>();
 
+			if (ScenarioCount == 0)
+			{
+				System.Windows.Forms.MessageBox.Show("This file is empty, new scenarios will be created");
+				for (int i = 0; i < 15; i++)
+					((List<dynamic>)LoadedLevelData).Add(new Dictionary<string, dynamic>());
+			}
+
 			if (scenarioIndex == -1)
             {
                 string res = "0";
-                InputDialog.Show("Select scenario", $"enter scenario value [0,{ScenarioCount - 1}]", ref res);
+				if (InputDialog.Show("Select scenario", $"enter scenario value [0,{ScenarioCount - 1}]", ref res) != System.Windows.Forms.DialogResult.OK)
+					throw new OperationCanceledException("Operation cancelled");
                 if (!int.TryParse(res, out scenarioIndex)) scenarioIndex = 0;
             }
 
